@@ -257,7 +257,10 @@ class Stream(object):
                     char = OSC_C1  # Go to OSC.
                 else:
                     if char == "#":
-                        sharp_dispatch[(yield)]()
+                        try:
+                            sharp_dispatch[(yield)]()
+                        except TypeError:
+                            print('bad params')
                     if char == "%":
                         self.select_other_charset((yield))
                     elif char in "()":
@@ -269,7 +272,10 @@ class Stream(object):
                         # for the why on the UTF-8 restriction.
                         listener.define_charset(code, mode=char)
                     else:
-                        escape_dispatch[char]()
+                        try:
+                            escape_dispatch[char]()
+                        except TypeError:
+                            print('bad params')
                     continue    # Don't go to CSI.
 
             if char in basic:
@@ -279,7 +285,10 @@ class Stream(object):
                 if (char == ctrl.SI or char == ctrl.SO) and self.use_utf8:
                     continue
 
-                basic_dispatch[char]()
+                try:
+                    basic_dispatch[char]()
+                except TypeError:
+                    print('bad params')
             elif char == CSI_C1:
                 # All parameters are unsigned, positive decimal integers, with
                 # the most significant digit sent first. Any parameter greater
@@ -302,7 +311,10 @@ class Stream(object):
                     if char == "?":
                         private = True
                     elif char in ALLOWED_IN_CSI:
-                        basic_dispatch[char]()
+                        try:
+                            basic_dispatch[char]()
+                        except TypeError:
+                            print('bad params')
                     elif char in SP_OR_GT:
                         pass  # Secondary DA is not supported atm.
                     elif char in CAN_OR_SUB:
@@ -321,9 +333,15 @@ class Stream(object):
                             current = ""
                         else:
                             if private:
-                                csi_dispatch[char](*params, private=True)
+                                try:
+                                    csi_dispatch[char](*params, private=True)
+                                except TypeError:
+                                    print('bad params')
                             else:
-                                csi_dispatch[char](*params)
+                                try:
+                                    csi_dispatch[char](*params)
+                                except TypeError:
+                                    print('bad params')
                             break  # CSI is finished.
             elif char == OSC_C1:
                 code = yield
